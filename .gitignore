@@ -1,0 +1,5 @@
+# personal sweepstake state — keep your group private
+data/state.json
+data/server.log
+node_modules/
+.DS_Store

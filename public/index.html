@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>World Cup 2026 Sweepstake</title>
+<link rel="stylesheet" href="/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+</head>
+<body>
+<header>
+  <div class="brand">
+    <h1>⚽ World Cup 2026 <span>Sweepstake</span></h1>
+    <p class="sub">USA · Canada · Mexico — 48 teams, one office legend</p>
+  </div>
+  <div class="header-actions">
+    <span id="syncStatus" class="sync-status"></span>
+    <button id="syncBtn" class="btn ghost">↻ Sync results</button>
+  </div>
+</header>
+
+<nav id="tabs">
+  <button data-tab="sweepstake" class="active">🎟️ Sweepstake</button>
+  <button data-tab="groups">📊 Groups</button>
+  <button data-tab="bracket">🏆 Bracket</button>
+  <button data-tab="matches">📅 Matches</button>
+</nav>
+
+<main>
+  <section id="tab-sweepstake" class="tab active"></section>
+  <section id="tab-groups" class="tab"></section>
+  <section id="tab-bracket" class="tab"></section>
+  <section id="tab-matches" class="tab"></section>
+</main>
+
+<div id="toast"></div>
+<script src="/app.js"></script>
+</body>
+</html>
