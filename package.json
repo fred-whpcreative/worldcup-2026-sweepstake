@@ -4,6 +4,7 @@
   "description": "Local World Cup 2026 sweepstake with live results and bracket",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "export": "node scripts/export-snapshot.js"
   }
 }

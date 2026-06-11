@@ -17,6 +17,11 @@ const PORT = process.env.PORT || 4026;
 const ROOT = __dirname;
 const DATA_DIR = path.join(ROOT, 'data');
 const STATE_FILE = path.join(DATA_DIR, 'state.json');
+const SNAPSHOT_FILE = path.join(DATA_DIR, 'state-snapshot.json');
+// Read-only "live viewer" mode: filesystem is ephemeral/read-only on hosts
+// like Vercel, so the group loads from a committed snapshot, fixtures are
+// kept in memory only, and all editing endpoints are disabled.
+const READ_ONLY = !!process.env.VERCEL || process.env.READONLY === '1';
 const SEED_FILE = path.join(DATA_DIR, 'fixtures-seed.json');
 const FEED_URL = 'https://fixturedownload.com/feed/json/fifa-world-cup-2026';
 const BBC_RSS = 'https://feeds.bbci.co.uk/sport/football/rss.xml';
@@ -76,9 +81,13 @@ const ROUND_NAMES = {
 let state = loadState();
 
 function loadState() {
-  try {
-    return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
-  } catch {
+  const candidates = READ_ONLY ? [SNAPSHOT_FILE, STATE_FILE] : [STATE_FILE, SNAPSHOT_FILE];
+  for (const file of candidates) {
+    try {
+      return JSON.parse(fs.readFileSync(file, 'utf8'));
+    } catch {}
+  }
+  {
     return {
       fixtures: JSON.parse(fs.readFileSync(SEED_FILE, 'utf8')),
       participants: [],          // [{id, name, color}]
@@ -94,8 +103,13 @@ function loadState() {
 }
 
 function saveState() {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
+  if (READ_ONLY) return; // fixtures live in memory; the group comes from the snapshot
+  try {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
+  } catch (e) {
+    console.log('saveState failed (continuing in memory):', e.message);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -326,6 +340,7 @@ function buildClientState() {
   })).sort((a, b) => a.rank - b.rank);
 
   return {
+    readOnly: READ_ONLY,
     participants: state.participants,
     assignments: state.assignments,
     topPicks: state.topPicks,
@@ -374,6 +389,12 @@ async function handleApi(req, res, url) {
       const out = await syncFeed(!!body.force);
       return json(res, 200, { ...out, state: buildClientState() });
     } catch (e) { return json(res, 502, { error: e.message }); }
+  }
+
+  // Everything below mutates the sweepstake — blocked on the live viewer.
+  // (state, news and sync are handled above; sync only touches memory here.)
+  if (READ_ONLY) {
+    return json(res, 403, { error: 'This is the read-only live view — the sweepstake is managed from the home server.' });
   }
 
   if (route === 'POST /api/participants') {

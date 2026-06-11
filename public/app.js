@@ -51,10 +51,11 @@ function renderHeader() {
 function renderSweepstake() {
   const el = $('#tab-sweepstake');
   const drawn = !!S.drawnAt;
+  const RO = S.readOnly;
 
   const partList = S.participants.map((p) => `
     <li><span class="dot" style="background:${p.color}"></span> ${esc(p.name)}
-      ${S.locked ? '' : `<button class="x" data-del="${p.id}" title="Remove">✕</button>`}
+      ${S.locked || RO ? '' : `<button class="x" data-del="${p.id}" title="Remove">✕</button>`}
     </li>`).join('');
 
   const perHead = S.participants.length
@@ -84,19 +85,21 @@ function renderSweepstake() {
   }
 
   el.innerHTML = `
-    ${S.locked ? `<div class="lock-banner">🔒 <b>Group saved &amp; locked</b>
+    ${RO ? `<div class="lock-banner">📺 <b>Live view</b>
+        <span style="color:var(--muted)">scores update automatically — sit back and suffer</span></div>` : ''}
+    ${S.locked && !RO ? `<div class="lock-banner">🔒 <b>Group saved &amp; locked</b>
         <span style="color:var(--muted)">since ${new Date(S.lockedAt).toLocaleString()}</span>
         <button class="btn danger small" id="unlockBtn" style="margin-left:auto">Unlock</button></div>` : ''}
     <div class="setup-row mb">
       <div class="card">
         <h2>Participants <span style="color:var(--muted);font-size:13px">(${S.participants.length})</span></h2>
-        ${S.locked ? '' : `<div class="add-row">
+        ${S.locked || RO ? '' : `<div class="add-row">
           <input id="nameInput" placeholder="Add a name…" maxlength="40">
           <button class="btn" id="addBtn">Add</button>
         </div>`}
         <ul class="participant-list">${partList || '<li style="color:var(--muted)">No one yet — add some names!</li>'}</ul>
         ${perHead ? `<p style="color:var(--muted);font-size:12px;margin-top:10px">${perHead} · everyone gets one ⭐ top contender</p>` : ''}
-        ${S.locked ? '' : `<div class="draw-actions">
+        ${S.locked || RO ? '' : `<div class="draw-actions">
           <button class="btn gold" id="drawBtn" ${S.participants.length < 2 ? 'disabled' : ''}>🎲 ${drawn ? 'Redraw' : 'Run the draw'}</button>
           ${drawn ? '<button class="btn" id="lockBtn">💾 Save group &amp; lock</button>' : ''}
         </div>`}
@@ -321,7 +324,7 @@ function renderMatches() {
         <option value="4">Round of 32</option><option value="5">Round of 16</option>
         <option value="6">Quarter-finals</option><option value="7">Semi-finals</option><option value="8">Final</option>
       </select>
-      <span style="color:var(--muted);font-size:13px">${list.length} matches · scores come from the feed, or enter them manually below</span>
+      <span style="color:var(--muted);font-size:13px">${list.length} matches · scores come from the feed${S.readOnly ? '' : ', or enter them manually below'}</span>
     </div>
     ${Object.entries(days).map(([day, ms]) => `
       <div class="day-head">${day}</div>
@@ -346,6 +349,7 @@ function fixtureRow(m) {
     const cls = m.winner === name ? 'winner-name' : '';
     return `${t ? t.flag : ''} <span class="${cls}">${esc(name)}</span> ${ownerChip(name)}`;
   };
+  const RO = S.readOnly;
   const played = m.HomeTeamScore != null && m.AwayTeamScore != null;
   const isKO = m.RoundNumber >= 4;
   const needsWinner = isKO && played && m.HomeTeamScore === m.AwayTeamScore;
@@ -356,7 +360,7 @@ function fixtureRow(m) {
     scoreBox = `<b>${m.HomeTeamScore} – ${m.AwayTeamScore}</b>${m.ManualResult ? '<div class="manual-tag">manual</div>' : ''}
       ${needsWinner && !m.winner ? `<div style="font-size:10px;color:var(--gold)">pens?</div>` : ''}
       ${isKO && m.winner && needsWinner ? `<div style="font-size:10px;color:var(--muted)">${esc(m.winner)} on pens</div>` : ''}`;
-  } else if (bothReal) {
+  } else if (bothReal && !RO) {
     scoreBox = `<input class="s" type="number" min="0" max="20" id="h${m.MatchNumber}"> –
       <input class="s" type="number" min="0" max="20" id="a${m.MatchNumber}">`;
   } else {
@@ -368,8 +372,8 @@ function fixtureRow(m) {
     <div class="score-box">${scoreBox}</div>
     <div class="side">${side(m.AwayTeam)}</div>
     <div class="meta">${time} · ${esc(m.Location)} · ${esc(m.roundName)}
-      ${!played && bothReal ? `<div><button class="btn ghost small" data-save="${m.MatchNumber}" style="margin-top:4px">Save score</button></div>` : ''}
-      ${needsWinner && !m.winner ? `<div><button class="btn ghost small" data-save="${m.MatchNumber}" style="margin-top:4px">Set pens winner</button></div>` : ''}
+      ${!played && bothReal && !RO ? `<div><button class="btn ghost small" data-save="${m.MatchNumber}" style="margin-top:4px">Save score</button></div>` : ''}
+      ${needsWinner && !m.winner && !RO ? `<div><button class="btn ghost small" data-save="${m.MatchNumber}" style="margin-top:4px">Set pens winner</button></div>` : ''}
     </div>
   </div>`;
 }

@@ -15,6 +15,19 @@ node server.js
 - **Bracket** — classic tournament tree (Round of 32 → Final + third place) showing who faces who, with each team's owner colour-dotted on the tie.
 - **Manual results** — if the feed lags, enter scores on the Matches tab (knockout draws prompt for the penalties winner). Manual entries override the feed.
 
+## Deploying a live read-only view (Vercel etc.)
+
+The app detects hosts with ephemeral/read-only filesystems (`VERCEL`, or set `READONLY=1`) and switches to **live viewer** mode: the group loads from the committed `data/state-snapshot.json`, fixtures/scores are fetched from the feed into memory, and all editing endpoints return 403. Your local machine stays the admin copy.
+
+To publish or update the live group:
+
+```bash
+npm run export   # copies data/state.json → data/state-snapshot.json
+git commit -am "Update sweepstake snapshot" && git push
+```
+
+The host redeploys and the live view picks up the new snapshot. Note the snapshot (participant names + allocations) becomes public — that's the point of the live view.
+
 ## Files
 
 - `server.js` — zero-dep Node server + API
