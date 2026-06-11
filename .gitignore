@@ -3,3 +3,5 @@ data/state.json
 data/server.log
 node_modules/
 .DS_Store
+.vercel/
+.vercel
